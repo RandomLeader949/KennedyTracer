@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEX VRC High Stakes Path Drawer</title>
+    <style>
+        canvas {
+            border: 2px solid black;
+            display: block;
+            margin: 20px auto;
+        }
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align: center;">Draw the Path for Your Robot (High Stakes Field)</h2>
+<canvas id="pathCanvas" width="600" height="600"></canvas>
+
+<button id="copyButton">Copy MoveTo Code</button>
+<button id="resetButton">Reset Sketch</button>
+
+<script>
+// Select the canvas and context
+const canvas = document.getElementById('pathCanvas');
+const ctx = canvas.getContext('2d');
+const copyButton = document.getElementById('copyButton');
+const resetButton = document.getElementById('resetButton');
+
+let drawing = false;
+let robotPath = []; // Stores the path coordinates
+
+// Initialize the field with grid and elements
+initializeField();
+
+// Start drawing when mouse is pressed
+canvas.addEventListener('mousedown', function (e) {
+    drawing = true;
+    const mousePos = getMousePos(canvas, e);
+    ctx.beginPath();
+    ctx.moveTo(mousePos.x, mousePos.y);
+    addToPath(mousePos.x, mousePos.y);
+});
+
+// Draw as the mouse moves
+canvas.addEventListener('mousemove', function (e) {
+    if (drawing) {
+        const mousePos = getMousePos(canvas, e);
+        ctx.lineTo(mousePos.x, mousePos.y);
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        addToPath(mousePos.x, mousePos.y);
+    }
+});
+
+// Stop drawing when mouse is released
+canvas.addEventListener('mouseup', function () {
+    drawing = false;
+});
+
+// Function to add the point to the robot's path
+function addToPath(x, y) {
+    robotPath.push({ x: x, y: y });
+}
+
+// Get the mouse position on the canvas
+function getMousePos(canvas, evt) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+
+// Converts the path into VEX moveTo commands
+function convertToMoveToCode() {
+    let moveToCode = '';
+    robotPath.forEach(point => {
+        moveToCode += `moveTo(${point.x}, ${point.y});\n`;
+    });
+    return moveToCode;
+}
+
+// Copy the moveTo code to clipboard
+copyButton.addEventListener('click', function() {
+    const moveToCode = convertToMoveToCode();
+    
+    // Create a temporary textarea to copy the code
+    const tempTextarea = document.createElement('textarea');
+    tempTextarea.value = moveToCode;
+    document.body.appendChild(tempTextarea);
+    tempTextarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempTextarea);
+    
+    alert('MoveTo code copied to clipboard!');
+});
+
+// Reset the sketch
+resetButton.addEventListener('click', function() {
+    robotPath = [];
+    initializeField();
+});
+
+// Draw grid and field elements
+function initializeField() {
+    drawGrid();
+    drawHighStakesField();
+}
+
+// Draws the grid for easier point plotting
+function drawGrid() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 0.5;
+    
+    // Draw vertical grid lines
+    for (let x = 0; x <= canvas.width; x += 20) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+    }
+    
+    // Draw horizontal grid lines
+    for (let y = 0; y <= canvas.height; y += 20) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+    }
+    
+    ctx.stroke();
+}
+
+// Draws VEX VRC High Stakes Field Elements (Goals, Discs, and Obstacles)
+function drawHighStakesField() {
+    // Drawing the hexagonal yellow goals
+    ctx.fillStyle = 'yellow';
+    drawHexagon(300, 300, 30);  // Center goal
+
+    drawHexagon(100, 100, 30);  // Top-left goal
+    drawHexagon(500, 100, 30);  // Top-right goal
+    drawHexagon(100, 500, 30);  // Bottom-left goal
+    drawHexagon(500, 500, 30);  // Bottom-right goal
+    
+    // Drawing red and blue discs around the field
+    ctx.fillStyle = 'red';
+    drawDisc(200, 200);
+    drawDisc(400, 400);
+    drawDisc(200, 400);
+    
+    ctx.fillStyle = 'blue';
+    drawDisc(400, 200);
+    drawDisc(300, 100);
+    drawDisc(300, 500);
+}
+
+// Function to draw hexagonal goals
+function drawHexagon(x, y, radius) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const xPos = x + radius * Math.cos(angle);
+        const yPos = y + radius * Math.sin(angle);
+        if (i === 0) {
+            ctx.moveTo(xPos, yPos);
+        } else {
+            ctx.lineTo(xPos, yPos);
+        }
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
+// Function to draw discs
+function drawDisc(x, y) {
+    ctx.beginPath();
+    ctx.arc(x, y, 15, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+</script>
+
+</body>
+</html>
